@@ -471,7 +471,7 @@ a commandline interface for interacting with it.`,
 				}()
 				s := ui.NewSummary(conf.SummaryTrendStats)
 				if err := s.SummarizeMetricsJSON(f, data); err != nil {
-					logrus.WithError(err).Fatal("failed to make summary export")
+					logrus.WithError(err).Fatal("failed to make json summary export")
 				}
 			}
 		}
