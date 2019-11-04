@@ -462,7 +462,7 @@ a commandline interface for interacting with it.`,
 		if conf.SummaryExport.Valid && conf.SummaryExport.String != "" {
 			f, err := os.Create(conf.SummaryExport.String)
 			if err != nil {
-				logrus.Error("failed to create summary export file")
+				logrus.WithError(err).Error("failed to create summary export file")
 			} else {
 				defer func() {
 					if err := f.Close(); err != nil {
