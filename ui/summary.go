@@ -401,7 +401,8 @@ func summarizeMetricsJSON(w io.Writer, t time.Duration, timeUnit string, metrics
 	for name, m := range metrics {
 		m.Sink.Calc()
 
-		data[name] = m.Sink.Format(t)
+		sinkData := m.Sink.Format(t)
+		data[name] = sinkData
 		if _, ok := m.Sink.(*stats.TrendSink); ok {
 			continue
 		}
@@ -409,7 +410,7 @@ func summarizeMetricsJSON(w io.Writer, t time.Duration, timeUnit string, metrics
 		_, extra := nonTrendMetricValueForSum(t, timeUnit, m)
 		if len(extra) > 1 {
 			extraData := make(map[string]interface{})
-			extraData["value"] = m.Sink.Format(t)["value"]
+			extraData["value"] = sinkData["value"]
 			extraData["extra"] = extra
 			data[name] = extraData
 		}
