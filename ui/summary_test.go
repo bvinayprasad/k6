@@ -23,6 +23,7 @@ package ui
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -163,4 +164,27 @@ func createTestMetrics() map[string]*stats.Metric {
 	metrics["my_trend"] = &stats.Metric{Name: "my_trend", Type: stats.Trend, Contains: stats.Time, Sink: sink}
 
 	return metrics
+}
+
+func TestSummarizeMetricsJSON(t *testing.T) {
+	metrics := createTestMetrics()
+	expected := `{\n    "name": "",\n    "path": "",\n    "id": "d41d8cd98f00b204e9800998ecf8427e",\n    "groups": {\n        "child": {\n            "name": "child",\n            "path": "::child",\n            "id": "f41cbb53a398ec1c9fb3d33e20c9b040",\n            "groups": {},\n            "checks": {\n                "check1": {\n                    "name": "check1",\n                    "path": "::child::check1",\n                    "id": "6289a7a06253a1c3f6137dfb25695563",\n                    "passes": 5,\n                    "fails": 10\n                }\n            }\n        }\n    },\n    "checks": {}\n}\n{\n    "checks": {\n        "extra": [\n            "✓ 3",\n            "✗ 0"\n        ],\n        "value": 0\n    },\n    "http_reqs": {\n        "count": 3,\n        "rate": 3\n    },\n    "my_trend": {\n        "avg": 15,\n        "max": 20,\n        "med": 15,\n        "min": 10,\n        "p(90)": 19,\n        "p(95)": 19.5\n    },\n    "vus": {\n        "extra": [\n            "min=1",\n            "max=1"\n        ],\n        "value": 1\n    }\n}\n`
+	expected = strings.ReplaceAll(expected, `\n`, "\n")
+	rootG, _ := lib.NewGroup("", nil)
+	childG, _ := rootG.Group("child")
+	check, _ := lib.NewCheck("check1", childG)
+	check.Passes = 5
+	check.Fails = 10
+	childG.Checks["check1"] = check
+
+	var w bytes.Buffer
+	s := NewSummary([]string{"avg", "min", "med", "max", "p(90)", "p(95)", "p(99.9)"})
+	err := s.SummarizeMetricsJSON(&w, SummaryData{
+		Metrics:   metrics,
+		RootGroup: rootG,
+		Time:      time.Second,
+		TimeUnit:  "",
+	})
+	assert.Nil(t, err)
+	assert.Equal(t, expected, w.String())
 }
