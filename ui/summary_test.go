@@ -242,3 +242,49 @@ func TestSummarizeMetricsJSON(t *testing.T) {
 	require.Nil(t, err)
 	require.JSONEq(t, expected, w.String())
 }
+
+func TestSummarizeMetricsJSONWithoutGroup(t *testing.T) {
+	metrics := createTestMetrics()
+	expected := `[{
+    "checks": {
+        "extra": [
+            "✓ 3",
+            "✗ 0"
+        ],
+        "value": 0
+    },
+    "http_reqs": {
+        "count": 3,
+        "rate": 3
+    },
+    "my_trend": {
+        "avg": 15,
+        "max": 20,
+        "med": 15,
+        "min": 10,
+        "p(90)": 19,
+        "p(95)": 19.5
+    },
+    "vus": {
+        "extra": [
+            "min=1",
+            "max=1"
+        ],
+        "value": 1
+    }
+}
+]
+`
+	s := NewSummary([]string{"avg", "min", "med", "max", "p(90)", "p(95)", "p(99.9)"})
+	data := SummaryData{
+		Metrics:   metrics,
+		RootGroup: nil,
+		Time:      time.Second,
+		TimeUnit:  "",
+	}
+
+	var w bytes.Buffer
+	err := s.SummarizeMetricsJSON(&w, data)
+	require.Nil(t, err)
+	require.JSONEq(t, expected, w.String())
+}
