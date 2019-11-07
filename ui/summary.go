@@ -386,59 +386,32 @@ func (s *Summary) SummarizeMetrics(w io.Writer, indent string, data SummaryData)
 	s.summarizeMetrics(w, indent+"  ", data.Time, data.TimeUnit, data.Metrics)
 }
 
-func newJSONEncoder(w io.Writer) *json.Encoder {
-	encoder := json.NewEncoder(w)
-	encoder.SetIndent("", "    ")
-	return encoder
-}
+// SummarizeMetricsJSON summarizes a dataset in JSON format.
+func (s *Summary) SummarizeMetricsJSON(w io.Writer, data SummaryData) error {
+	m := make(map[string]interface{})
+	m["root_group"] = data.RootGroup
 
-func (s *Summary) summarizeGroupJSON(w io.Writer, group *lib.Group) error {
-	return newJSONEncoder(w).Encode(group)
-}
-
-//nolint: lll
-func (s *Summary) summarizeMetricsJSON(w io.Writer, t time.Duration, timeUnit string, metrics map[string]*stats.Metric) error {
-	data := make(map[string]interface{})
-	for name, m := range metrics {
+	metricsData := make(map[string]interface{})
+	for name, m := range data.Metrics {
 		m.Sink.Calc()
 
-		sinkData := m.Sink.Format(t)
-		data[name] = sinkData
+		sinkData := m.Sink.Format(data.Time)
+		metricsData[name] = sinkData
 		if _, ok := m.Sink.(*stats.TrendSink); ok {
 			continue
 		}
 
-		_, extra := nonTrendMetricValueForSum(t, timeUnit, m)
+		_, extra := nonTrendMetricValueForSum(data.Time, data.TimeUnit, m)
 		if len(extra) > 1 {
 			extraData := make(map[string]interface{})
 			extraData["value"] = sinkData["value"]
 			extraData["extra"] = extra
-			data[name] = extraData
+			metricsData[name] = extraData
 		}
 	}
+	m["metrics"] = metricsData
+	encoder := json.NewEncoder(w)
+	encoder.SetIndent("", "    ")
 
-	return newJSONEncoder(w).Encode(data)
-}
-
-// SummarizeMetricsJSON summarizes a dataset in JSON format.
-func (s *Summary) SummarizeMetricsJSON(w io.Writer, data SummaryData) error {
-	if _, err := w.Write([]byte(`[`)); err != nil {
-		return err
-	}
-	if data.RootGroup != nil {
-		if err := s.summarizeGroupJSON(w, data.RootGroup); err != nil {
-			return err
-		}
-		if _, err := w.Write([]byte(fmt.Sprintf(",\n"))); err != nil {
-			return err
-		}
-	}
-	if err := s.summarizeMetricsJSON(w, data.Time, data.TimeUnit, data.Metrics); err != nil {
-		return err
-	}
-	if _, err := w.Write([]byte(`]`)); err != nil {
-		return err
-	}
-
-	return nil
+	return encoder.Encode(m)
 }
