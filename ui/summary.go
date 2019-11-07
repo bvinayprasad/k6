@@ -396,6 +396,7 @@ func (s *Summary) summarizeGroupJSON(w io.Writer, group *lib.Group) error {
 	return newJSONEncoder(w).Encode(group)
 }
 
+//nolint: lll
 func (s *Summary) summarizeMetricsJSON(w io.Writer, t time.Duration, timeUnit string, metrics map[string]*stats.Metric) error {
 	data := make(map[string]interface{})
 	for name, m := range metrics {
