@@ -169,7 +169,7 @@ func createTestMetrics() map[string]*stats.Metric {
 
 func TestSummarizeMetricsJSON(t *testing.T) {
 	metrics := createTestMetrics()
-	expectedGroup := `{
+	expected := `[{
     "name": "",
     "path": "",
     "id": "d41d8cd98f00b204e9800998ecf8427e",
@@ -191,9 +191,8 @@ func TestSummarizeMetricsJSON(t *testing.T) {
         }
     },
     "checks": {}
-}
-`
-	expectedMetrics := `{
+},
+{
     "checks": {
         "extra": [
             "✓ 3",
@@ -221,6 +220,7 @@ func TestSummarizeMetricsJSON(t *testing.T) {
         "value": 1
     }
 }
+]
 `
 	rootG, _ := lib.NewGroup("", nil)
 	childG, _ := rootG.Group("child")
@@ -238,16 +238,7 @@ func TestSummarizeMetricsJSON(t *testing.T) {
 	}
 
 	var w bytes.Buffer
-	err := s.summarizeGroupJSON(&w, data.RootGroup)
+	err := s.SummarizeMetricsJSON(&w, data)
 	require.Nil(t, err)
-	require.JSONEq(t, expectedGroup, w.String())
-
-	w.Reset()
-	err = s.summarizeMetricsJSON(&w, data.Time, data.TimeUnit, data.Metrics)
-	require.Nil(t, err)
-	require.JSONEq(t, expectedMetrics, w.String())
-
-	w.Reset()
-	err = s.SummarizeMetricsJSON(&w, data)
-	require.Nil(t, err)
+	require.JSONEq(t, expected, w.String())
 }

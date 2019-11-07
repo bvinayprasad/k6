@@ -422,10 +422,23 @@ func (s *Summary) summarizeMetricsJSON(w io.Writer, t time.Duration, timeUnit st
 
 // SummarizeMetricsJSON summarizes a dataset in JSON format.
 func (s *Summary) SummarizeMetricsJSON(w io.Writer, data SummaryData) error {
+	if _, err := w.Write([]byte(`[`)); err != nil {
+		return err
+	}
 	if data.RootGroup != nil {
 		if err := s.summarizeGroupJSON(w, data.RootGroup); err != nil {
 			return err
 		}
+		if _, err := w.Write([]byte(fmt.Sprintf(",\n"))); err != nil {
+			return err
+		}
 	}
-	return s.summarizeMetricsJSON(w, data.Time, data.TimeUnit, data.Metrics)
+	if err := s.summarizeMetricsJSON(w, data.Time, data.TimeUnit, data.Metrics); err != nil {
+		return err
+	}
+	if _, err := w.Write([]byte(`]`)); err != nil {
+		return err
+	}
+
+	return nil
 }
