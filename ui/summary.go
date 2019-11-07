@@ -392,11 +392,11 @@ func newJSONEncoder(w io.Writer) *json.Encoder {
 	return encoder
 }
 
-func summarizeGroupJSON(w io.Writer, group *lib.Group) error {
+func (s *Summary) summarizeGroupJSON(w io.Writer, group *lib.Group) error {
 	return newJSONEncoder(w).Encode(group)
 }
 
-func summarizeMetricsJSON(w io.Writer, t time.Duration, timeUnit string, metrics map[string]*stats.Metric) error {
+func (s *Summary) summarizeMetricsJSON(w io.Writer, t time.Duration, timeUnit string, metrics map[string]*stats.Metric) error {
 	data := make(map[string]interface{})
 	for name, m := range metrics {
 		m.Sink.Calc()
@@ -422,9 +422,9 @@ func summarizeMetricsJSON(w io.Writer, t time.Duration, timeUnit string, metrics
 // SummarizeMetricsJSON summarizes a dataset in JSON format.
 func (s *Summary) SummarizeMetricsJSON(w io.Writer, data SummaryData) error {
 	if data.RootGroup != nil {
-		if err := summarizeGroupJSON(w, data.RootGroup); err != nil {
+		if err := s.summarizeGroupJSON(w, data.RootGroup); err != nil {
 			return err
 		}
 	}
-	return summarizeMetricsJSON(w, data.Time, data.TimeUnit, data.Metrics)
+	return s.summarizeMetricsJSON(w, data.Time, data.TimeUnit, data.Metrics)
 }

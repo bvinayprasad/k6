@@ -23,14 +23,15 @@ package ui
 import (
 	"bytes"
 	"fmt"
-	"strings"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/guregu/null.v3"
+
 	"github.com/loadimpact/k6/lib"
 	"github.com/loadimpact/k6/stats"
-	"github.com/stretchr/testify/assert"
-	"gopkg.in/guregu/null.v3"
 )
 
 func TestSummary(t *testing.T) {
@@ -168,8 +169,59 @@ func createTestMetrics() map[string]*stats.Metric {
 
 func TestSummarizeMetricsJSON(t *testing.T) {
 	metrics := createTestMetrics()
-	expected := `{\n    "name": "",\n    "path": "",\n    "id": "d41d8cd98f00b204e9800998ecf8427e",\n    "groups": {\n        "child": {\n            "name": "child",\n            "path": "::child",\n            "id": "f41cbb53a398ec1c9fb3d33e20c9b040",\n            "groups": {},\n            "checks": {\n                "check1": {\n                    "name": "check1",\n                    "path": "::child::check1",\n                    "id": "6289a7a06253a1c3f6137dfb25695563",\n                    "passes": 5,\n                    "fails": 10\n                }\n            }\n        }\n    },\n    "checks": {}\n}\n{\n    "checks": {\n        "extra": [\n            "✓ 3",\n            "✗ 0"\n        ],\n        "value": 0\n    },\n    "http_reqs": {\n        "count": 3,\n        "rate": 3\n    },\n    "my_trend": {\n        "avg": 15,\n        "max": 20,\n        "med": 15,\n        "min": 10,\n        "p(90)": 19,\n        "p(95)": 19.5\n    },\n    "vus": {\n        "extra": [\n            "min=1",\n            "max=1"\n        ],\n        "value": 1\n    }\n}\n`
-	expected = strings.ReplaceAll(expected, `\n`, "\n")
+	expectedGroup := `{
+    "name": "",
+    "path": "",
+    "id": "d41d8cd98f00b204e9800998ecf8427e",
+    "groups": {
+        "child": {
+        "name": "child",
+        "path": "::child",
+        "id": "f41cbb53a398ec1c9fb3d33e20c9b040",
+        "groups": {},
+        "checks": {
+            "check1": {
+                "name": "check1",
+                "path": "::child::check1",
+                "id": "6289a7a06253a1c3f6137dfb25695563",
+                "passes": 5,
+                "fails": 10
+                }
+            }
+        }
+    },
+    "checks": {}
+}
+`
+	expectedMetrics := `{
+    "checks": {
+        "extra": [
+            "✓ 3",
+            "✗ 0"
+        ],
+        "value": 0
+    },
+    "http_reqs": {
+        "count": 3,
+        "rate": 3
+    },
+    "my_trend": {
+        "avg": 15,
+        "max": 20,
+        "med": 15,
+        "min": 10,
+        "p(90)": 19,
+        "p(95)": 19.5
+    },
+    "vus": {
+        "extra": [
+            "min=1",
+            "max=1"
+        ],
+        "value": 1
+    }
+}
+`
 	rootG, _ := lib.NewGroup("", nil)
 	childG, _ := rootG.Group("child")
 	check, _ := lib.NewCheck("check1", childG)
@@ -177,14 +229,25 @@ func TestSummarizeMetricsJSON(t *testing.T) {
 	check.Fails = 10
 	childG.Checks["check1"] = check
 
-	var w bytes.Buffer
 	s := NewSummary([]string{"avg", "min", "med", "max", "p(90)", "p(95)", "p(99.9)"})
-	err := s.SummarizeMetricsJSON(&w, SummaryData{
+	data := SummaryData{
 		Metrics:   metrics,
 		RootGroup: rootG,
 		Time:      time.Second,
 		TimeUnit:  "",
-	})
-	assert.Nil(t, err)
-	assert.Equal(t, expected, w.String())
+	}
+
+	var w bytes.Buffer
+	err := s.summarizeGroupJSON(&w, data.RootGroup)
+	require.Nil(t, err)
+	require.JSONEq(t, expectedGroup, w.String())
+
+	w.Reset()
+	err = s.summarizeMetricsJSON(&w, data.Time, data.TimeUnit, data.Metrics)
+	require.Nil(t, err)
+	require.JSONEq(t, expectedMetrics, w.String())
+
+	w.Reset()
+	err = s.SummarizeMetricsJSON(&w, data)
+	require.Nil(t, err)
 }
