@@ -243,6 +243,30 @@ func nonTrendMetricValueForSum(t time.Duration, timeUnit string, m *stats.Metric
 	}
 }
 
+func nonTrendMetricValueForSumJSON(t time.Duration, m *stats.Metric) map[string]interface{} {
+	data := make(map[string]interface{})
+	switch sink := m.Sink.(type) {
+	case *stats.CounterSink:
+		value := sink.Value
+		rate := 0.0
+		if t > 0 {
+			rate = value / (float64(t) / float64(time.Second))
+		}
+		data["rate"] = rate
+	case *stats.GaugeSink:
+		min := sink.Min
+		max := sink.Max
+		data["min"] = min
+		data["max"] = max
+	case *stats.RateSink:
+		passes := sink.Trues
+		fails := sink.Total - sink.Trues
+		data["passes"] = passes
+		data["fails"] = fails
+	}
+	return data
+}
+
 func displayNameForMetric(m *stats.Metric) string {
 	if m.Sub.Parent != "" {
 		return "{ " + m.Sub.Suffix + " }"
@@ -401,7 +425,7 @@ func (s *Summary) SummarizeMetricsJSON(w io.Writer, data SummaryData) error {
 			continue
 		}
 
-		_, extra := nonTrendMetricValueForSum(data.Time, data.TimeUnit, m)
+		extra := nonTrendMetricValueForSumJSON(data.Time, m)
 		if len(extra) > 1 {
 			extraData := make(map[string]interface{})
 			extraData["value"] = sinkData["value"]

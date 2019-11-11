@@ -195,10 +195,10 @@ func TestSummarizeMetricsJSON(t *testing.T) {
     },
     "metrics": {
         "checks": {
-            "extra": [
-                "✓ 3",
-                "✗ 0"
-            ],
+            "extra": {
+                "passes": 3,
+                "fails": 0
+            },
             "value": 0
         },
         "http_reqs": {
@@ -214,10 +214,10 @@ func TestSummarizeMetricsJSON(t *testing.T) {
             "p(95)": 19.5
         },
         "vus": {
-            "extra": [
-                "min=1",
-                "max=1"
-            ],
+            "extra": {
+                "min": 1,
+                "max": 1
+            },
             "value": 1
         }
     }
