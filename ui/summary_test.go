@@ -182,11 +182,11 @@ func TestSummarizeMetricsJSON(t *testing.T) {
             "groups": {},
             "checks": {
                 "check1": {
-                    "name": "check1",
-                    "path": "::child::check1",
-                    "id": "6289a7a06253a1c3f6137dfb25695563",
-                    "passes": 5,
-                    "fails": 10
+                        "name": "check1",
+                        "path": "::child::check1",
+                        "id": "6289a7a06253a1c3f6137dfb25695563",
+                        "passes": 5,
+                        "fails": 10
                     }
                 }
             }
@@ -195,11 +195,9 @@ func TestSummarizeMetricsJSON(t *testing.T) {
     },
     "metrics": {
         "checks": {
-            "extra": {
-                "passes": 3,
-                "fails": 0
-            },
-            "value": 0
+            "value": 0,
+            "passes": 3,
+            "fails": 0
         },
         "http_reqs": {
             "count": 3,
@@ -214,11 +212,9 @@ func TestSummarizeMetricsJSON(t *testing.T) {
             "p(95)": 19.5
         },
         "vus": {
-            "extra": {
-                "min": 1,
-                "max": 1
-            },
-            "value": 1
+            "value": 1,
+            "min": 1,
+            "max": 1
         }
     }
 }
