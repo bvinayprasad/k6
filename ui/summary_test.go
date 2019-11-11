@@ -176,12 +176,12 @@ func TestSummarizeMetricsJSON(t *testing.T) {
         "id": "d41d8cd98f00b204e9800998ecf8427e",
         "groups": {
             "child": {
-            "name": "child",
-            "path": "::child",
-            "id": "f41cbb53a398ec1c9fb3d33e20c9b040",
-            "groups": {},
-            "checks": {
-                "check1": {
+                "name": "child",
+                "path": "::child",
+                "id": "f41cbb53a398ec1c9fb3d33e20c9b040",
+                "groups": {},
+                "checks": {
+                    "check1": {
                         "name": "check1",
                         "path": "::child::check1",
                         "id": "6289a7a06253a1c3f6137dfb25695563",
