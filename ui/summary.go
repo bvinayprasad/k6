@@ -416,6 +416,20 @@ func (s *Summary) SummarizeMetricsJSON(w io.Writer, data SummaryData) error {
 
 		sinkData := m.Sink.Format(data.Time)
 		metricsData[name] = sinkData
+
+		if len(m.Thresholds.Thresholds) > 0 {
+			sinkDataWithThreshold := make(map[string]interface{})
+			for k, v := range sinkData {
+				sinkDataWithThreshold[k] = v
+			}
+			thresholds := make(map[string]interface{})
+			for _, threshold := range m.Thresholds.Thresholds {
+				thresholds[threshold.Source] = threshold.LastFailed
+			}
+			sinkDataWithThreshold["thresholds"] = thresholds
+			metricsData[name] = sinkDataWithThreshold
+		}
+
 		if _, ok := m.Sink.(*stats.TrendSink); ok {
 			continue
 		}

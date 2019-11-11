@@ -162,7 +162,20 @@ func createTestMetrics() map[string]*stats.Metric {
 	metrics["vus"] = gaugeMetric
 	metrics["http_reqs"] = countMetric
 	metrics["checks"] = checksMetric
-	metrics["my_trend"] = &stats.Metric{Name: "my_trend", Type: stats.Trend, Contains: stats.Time, Sink: sink}
+	metrics["my_trend"] = &stats.Metric{
+		Name:     "my_trend",
+		Type:     stats.Trend,
+		Contains: stats.Time,
+		Sink:     sink,
+		Thresholds: stats.Thresholds{
+			Thresholds: []*stats.Threshold{
+				&stats.Threshold{
+					Source:     "my_trend<1000",
+					LastFailed: true,
+				},
+			},
+		},
+	}
 
 	return metrics
 }
@@ -209,7 +222,10 @@ func TestSummarizeMetricsJSON(t *testing.T) {
             "med": 15,
             "min": 10,
             "p(90)": 19,
-            "p(95)": 19.5
+            "p(95)": 19.5,
+            "thresholds": {
+                "my_trend<1000": true
+            }
         },
         "vus": {
             "value": 1,
