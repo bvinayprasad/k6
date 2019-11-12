@@ -148,6 +148,8 @@ func createTestMetrics() map[string]*stats.Metric {
 
 	countMetric := stats.New("http_reqs", stats.Counter)
 	countMetric.Tainted = null.BoolFrom(true)
+	countMetric.Thresholds = stats.Thresholds{Thresholds: []*stats.Threshold{&stats.Threshold{Source: "rate<100"}}}
+
 	checksMetric := stats.New("checks", stats.Rate)
 	checksMetric.Tainted = null.BoolFrom(false)
 	sink := &stats.TrendSink{}
@@ -167,6 +169,7 @@ func createTestMetrics() map[string]*stats.Metric {
 		Type:     stats.Trend,
 		Contains: stats.Time,
 		Sink:     sink,
+		Tainted:  null.BoolFrom(true),
 		Thresholds: stats.Thresholds{
 			Thresholds: []*stats.Threshold{
 				&stats.Threshold{
@@ -214,7 +217,10 @@ func TestSummarizeMetricsJSON(t *testing.T) {
         },
         "http_reqs": {
             "count": 3,
-            "rate": 3
+            "rate": 3,
+            "thresholds": {
+                "rate<100": false
+            }
         },
         "my_trend": {
             "avg": 15,
