@@ -148,7 +148,7 @@ func createTestMetrics() map[string]*stats.Metric {
 
 	countMetric := stats.New("http_reqs", stats.Counter)
 	countMetric.Tainted = null.BoolFrom(true)
-	countMetric.Thresholds = stats.Thresholds{Thresholds: []*stats.Threshold{&stats.Threshold{Source: "rate<100"}}}
+	countMetric.Thresholds = stats.Thresholds{Thresholds: []*stats.Threshold{{Source: "rate<100"}}}
 
 	checksMetric := stats.New("checks", stats.Rate)
 	checksMetric.Tainted = null.BoolFrom(false)
@@ -172,7 +172,7 @@ func createTestMetrics() map[string]*stats.Metric {
 		Tainted:  null.BoolFrom(true),
 		Thresholds: stats.Thresholds{
 			Thresholds: []*stats.Threshold{
-				&stats.Threshold{
+				{
 					Source:     "my_trend<1000",
 					LastFailed: true,
 				},
