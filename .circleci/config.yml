@@ -37,7 +37,7 @@ jobs:
             export PATH=$GOPATH/bin:$PATH
             echo "mode: set" > coverage.txt
             for pkg in $(go list ./... | grep -v vendor); do
-                go test -race -timeout 800s  --coverpkg=$(go list -test -f  '{{ join .Deps  "\n"}}' $pkg | grep github.com/loadimpact/k6 | grep -v vendor | cut -f1 -d " " | sort -u) -coverprofile=$(echo $pkg | tr / -).coverage $pkg
+                go test -race -timeout 800s  --coverpkg="$(go list -test -f  '{{ join .Deps  "\n"}}' $pkg | grep github.com/loadimpact/k6 | grep -v vendor | cut -f1 -d " " | sort -u)" -coverprofile=$(echo $pkg | tr / -).coverage $pkg
             done
             grep -h -v "^mode:" *.coverage >> coverage.txt
             rm -f *.coverage
