@@ -35,6 +35,7 @@ import (
 	"time"
 
 	"github.com/Azure/go-ntlmssp"
+	"github.com/oracle/oci-go-sdk/common"
 	"github.com/sirupsen/logrus"
 	null "gopkg.in/guregu/null.v3"
 
@@ -117,6 +118,7 @@ type ParsedHTTPRequest struct {
 	ActiveJar    *cookiejar.Jar
 	Cookies      map[string]*HTTPRequestCookie
 	Tags         map[string]string
+	Oci         map[string]string
 }
 
 // Matches non-compliant io.Closer implementations (e.g. zstd.Decoder)
@@ -215,6 +217,9 @@ func MakeRequest(ctx context.Context, preq *ParsedHTTPRequest) (*Response, error
 		}
 		// as per the documentation using GetBody still requires setting the Body.
 		preq.Req.Body, _ = preq.Req.GetBody()
+
+		//preq.Req.Header.Set("Content-Type", "application/json")
+
 	}
 
 	if contentLengthHeader := preq.Req.Header.Get("Content-Length"); contentLengthHeader != "" {
@@ -281,6 +286,31 @@ func MakeRequest(ctx context.Context, preq *ParsedHTTPRequest) (*Response, error
 	}
 
 	resp := &Response{ctx: ctx, URL: preq.URL.URL, Request: *respReq}
+
+	//#############################################################################################################
+	if preq.Oci != nil && len( preq.Oci) > 0 {
+		ocidet := make(map[string]string)
+		for k, v := range preq.Oci {
+			ocidet[k] = v
+		}
+
+		testPassPhrase2 := ocidet["passphrase"]
+   		configProvider := common.NewRawConfigurationProvider(ocidet["tenant_ocid"], ocidet["user_ocid"], ocidet["region"], ocidet["fingerprint"], ocidet["base64privatekey"], &testPassPhrase2)
+		// Mandatory headers to be used in the sign process
+        defaultGenericHeaders    := []string{"date", "(request-target)", "host"}
+        // Optional headers
+       optionalHeaders := []string{"content-length", "content-type", "x-content-sha256"}
+        // A predicate that specifies when to use the optional signing headers
+        optionalHeadersPredicate := func (r *http.Request) bool {
+        	return r.Method == http.MethodPost
+        	//return false
+        }
+		preq.Req.Header.Set("Date", time.Now().UTC().Format(http.TimeFormat))
+        signer := common.RequestSignerWithBodyHashingPredicate(configProvider, defaultGenericHeaders, optionalHeaders,optionalHeadersPredicate)
+     	signer.Sign(preq.Req)
+	}
+	//#############################################################################################################
+
 	client := http.Client{
 		Transport: transport,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -315,6 +345,8 @@ func MakeRequest(ctx context.Context, preq *ParsedHTTPRequest) (*Response, error
 	defer cancelFunc()
 	mreq := preq.Req.WithContext(reqCtx)
 	res, resErr := client.Do(mreq)
+	//fmt.Println("error is %s",resErr)
+	//fmt.Println("res is %s",res)
 
 	// TODO(imiric): It would be safer to check for a writeable
 	// response body here instead of status code, but those are
@@ -322,6 +354,7 @@ func MakeRequest(ctx context.Context, preq *ParsedHTTPRequest) (*Response, error
 	// unusable until https://github.com/golang/go/issues/31391 is fixed.
 	if res != nil && res.StatusCode == http.StatusSwitchingProtocols {
 		_ = res.Body.Close()
+		fmt.Println("unsupported response status: %s", res.Status)
 		return nil, fmt.Errorf("unsupported response status: %s", res.Status)
 	}
 

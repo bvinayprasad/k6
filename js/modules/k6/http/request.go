@@ -137,6 +137,7 @@ func (h *HTTP) parseRequest(
 		Redirects: state.Options.MaxRedirects,
 		Cookies:   make(map[string]*httpext.HTTPRequestCookie),
 		Tags:      make(map[string]string),
+		Oci: 	   make(map[string]string),
 	}
 	if state.Options.DiscardResponseBodies.Bool {
 		result.ResponseType = httpext.ResponseTypeNone
@@ -332,6 +333,20 @@ func (h *HTTP) parseRequest(
 				}
 				for _, key := range tagObj.Keys() {
 					result.Tags[key] = tagObj.Get(key).String()
+				}
+			case "oci":
+				ociV := params.Get(k)
+				if goja.IsUndefined(ociV) || goja.IsNull(ociV) {
+					continue
+				}
+				ociObj := ociV.ToObject(rt)
+
+				if ociObj == nil {
+					continue
+				}
+
+				for _, key := range ociObj.Keys() {
+					result.Oci[key] = ociObj.Get(key).String()
 				}
 			case "auth":
 				result.Auth = params.Get(k).String()

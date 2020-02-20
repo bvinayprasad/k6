@@ -360,6 +360,16 @@ func (s *Socket) Send(message string) {
 	s.msgSentTimestamps = append(s.msgSentTimestamps, time.Now())
 }
 
+func (s *Socket) SendBinary(writeData []byte) {
+	//supports binary message
+	rt := common.GetRuntime(s.ctx)
+	if err := s.conn.WriteMessage(websocket.BinaryMessage, writeData); err != nil {
+		s.handleEvent("error", rt.ToValue(err))
+	}
+
+	s.msgSentTimestamps = append(s.msgSentTimestamps, time.Now())
+}
+
 func (s *Socket) Ping() {
 	rt := common.GetRuntime(s.ctx)
 	deadline := time.Now().Add(writeWait)
